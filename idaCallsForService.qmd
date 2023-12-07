@@ -283,7 +283,8 @@ cfs_11_to_21 %>%
 
 ```
 
-## Analyze 
+## Analyze
+
 ```{r}
 # calls for service
 cfs_11_to_21_dv_nd <-
@@ -348,11 +349,12 @@ cfs_11_to_21_dv_nd %>%
   filter(str_detect(Type_, "34D|35D|56D|38D|37D|103D")) %>% 
   group_by(disaster_y_n) %>% 
   count(sort = T) 
+```
 
+An analysis of family violence calls to police shows they decreased significantly during hurricanes Harvey and Ida and lagged in the aftermath. The dearth of activity during the disaster dragged the rolling 7-day average of family violence calls received by New Orleans police down by about fifteen calls after Ida. That average didn’t recover for about two weeks after the disaster declaration expired.
+```{r}
 # What do noatural disasters do to the rolling average DV cases?
 # calls for service:
-
-
 cfs_by_week <- cfs_11_to_21_dv_nd %>% 
   filter(str_detect(Type_, "34D|35D|56D|38D|37D|103D")) %>% 
   mutate(TimeCreate = mdy_hms(TimeCreate)) %>% 
@@ -414,7 +416,9 @@ cfs_11_to_21_dv_nd %>%
 
   filter(week >= "2021-07-01" & week < "2021-09-30") 
 
-  
+```
+Hurricane Ida caused a decrease in calls to the New Orleans police department as well. During Ida, family violence calls for service to NOPD dropped to their lowest levels of 2021. During the period of Hurricane Ida, NOPD received 316 family violence calls, down from an average of around 400 in the five years before.  
+```{r}
 # Calls for service during Ida vs. same time period in other years 
   
 cfs_11_to_21 %>% 
@@ -433,7 +437,8 @@ cfs_11_to_21 %>%
 
 ```
 
-### Regress 
+### Regress
+
 ```{r}
 
 test <- 
@@ -449,4 +454,3 @@ chisq.test(matrix(c(test$disaster_y_n, test$mean), nrow = 4))
 lm(n ~ disaster_y_n, cfs_by_week)
 
 ```
-
