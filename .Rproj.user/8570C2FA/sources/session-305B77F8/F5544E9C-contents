@@ -1,0 +1,703 @@
+---
+title: "house_security_analysis"
+author: "Greg Morton"
+date: "2023-06-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+library(janitor)
+library(parsedate)
+library(knitr)
+```
+
+## House 
+
+# import and clean data 
+# look at the output files and figure out if it makes sense to count those line items into security or not 
+# make sure we aren't including IT security 
+# chunks 
+  # total house security spending 
+  # top 20 offices that spent the most on security 
+  # change in the 1 year pre/post Jan 6th 
+# are there any companies paying way more 
+# DHS spending 
+
+
+
+```{r, include = F}
+# House Q1 2023 
+
+q1_2023_house_spend <-
+  read_csv("../../../data/raw/house_spending_oct_dec_2022.csv") %>% 
+  clean_names() %>% 
+    mutate(perform_start_dt = dmy(perform_start_dt),
+         perform_end_dt = dmy(perform_end_dt),
+         transaction_date = dmy(transaction_date)) %>%
+  mutate(time_period = "july_to_sept_2022") %>%
+  mutate(fy = "FY 2023") %>%
+  mutate(cal_year = case_when(str_detect(time_period, "2020") ~ "2020",
+                              str_detect(time_period, "2021") ~ "2021",
+                              str_detect(time_period, "2022") ~ "2022",
+                              str_detect(time_period, "2023") ~ "2023",
+                              TRUE ~ "other"
+))
+
+
+# House Q4 2022
+q4_2022_house_spend <-
+read_csv("../../../data/raw/house_spending_july_sept_2022.csv") %>%
+  clean_names() %>%
+  mutate(perform_start_dt = dmy(perform_start_dt),
+         perform_end_dt = dmy(perform_end_dt),
+         transaction_date = dmy(transaction_date)) %>%
+  mutate(time_period = "july_to_sept_2022") %>%
+  mutate(fy = "FY 2022") %>%
+  mutate(cal_year = case_when(str_detect(time_period, "2020") ~ "2020",
+                              str_detect(time_period, "2021") ~ "2021",
+                              str_detect(time_period, "2022") ~ "2022",
+                              str_detect(time_period, "2023") ~ "2023",
+                              TRUE ~ "other"
+))
+
+# House Q3 2022
+q3_2022_house_spend <-
+  read_csv("../../../data/house_spending_arp_jun_2022.csv") %>%
+  clean_names() %>%
+  mutate(perform_start_dt = dmy(perform_start_dt),
+         perform_end_dt = dmy(perform_end_dt),
+         transaction_date = dmy(transaction_date)) %>%
+  mutate(time_period = "arp_to_jun_2022")%>%
+  mutate(fy = "FY 2022") %>%
+  mutate(cal_year = case_when(str_detect(time_period, "2020") ~ "2020",
+                              str_detect(time_period, "2021") ~ "2021",
+                              str_detect(time_period, "2022") ~ "2022",
+                              str_detect(time_period, "2023") ~ "2023",
+                              TRUE ~ "other"
+))
+
+# House Q2 2022
+q2_2022_house_spend <-
+  read_csv("../../../data/raw/house_spending_jan_mar_2022.csv") %>%
+  clean_names() %>%
+  mutate(perform_start_dt = dmy(perform_start_dt),
+         perform_end_dt = dmy(perform_end_dt),
+         transaction_date = dmy(transaction_date)) %>%
+  mutate(time_period = "jan_to_mar_2022")%>%
+  mutate(fy = "FY 2022")%>%
+  mutate(cal_year = case_when(str_detect(time_period, "2020") ~ "2020",
+                              str_detect(time_period, "2021") ~ "2021",
+                              str_detect(time_period, "2022") ~ "2022",
+                              str_detect(time_period, "2023") ~ "2023",
+                              TRUE ~ "other"
+))
+
+# House Q1 2022
+q1_2022_house_spend <-
+  read_csv("../../../data/raw/house_spending_oct_dec_2021.csv") %>%
+  clean_names() %>%
+  mutate(perform_start_dt = dmy(perform_start_dt),
+         perform_end_dt = dmy(perform_end_dt),
+         transaction_date = dmy(transaction_date)) %>%
+  mutate(time_period = "oct_to_dec_2021")%>%
+  mutate(fy = "FY 2022")%>%
+  mutate(cal_year = case_when(str_detect(time_period, "2020") ~ "2020",
+                              str_detect(time_period, "2021") ~ "2021",
+                              str_detect(time_period, "2022") ~ "2022",
+                              str_detect(time_period, "2023") ~ "2023",
+                              TRUE ~ "other"
+))
+
+
+# Q4 2021
+q4_2021_house_spend <-
+  read_csv("../../../data/raw/house_spending_jul_sep_2021.csv") %>%
+  clean_names() %>%
+  mutate(perform_start_dt = dmy(perform_start_dt),
+         perform_end_dt = dmy(perform_end_dt),
+         transaction_date = dmy(transaction_date)) %>%
+  mutate(time_period = "jul_sep_to_2021") %>%
+  mutate(fy = "FY 2021") %>%
+  mutate(cal_year = case_when(str_detect(time_period, "2020") ~ "2020",
+                              str_detect(time_period, "2021") ~ "2021",
+                              str_detect(time_period, "2022") ~ "2022",
+                              str_detect(time_period, "2023") ~ "2023",
+                              TRUE ~ "other"
+))
+
+
+# Q3 2021
+q3_2021_house_spend <-
+  read_csv("../../../data/raw/house_spending_apr_jun_2021.csv") %>%
+  clean_names() %>%
+  mutate(perform_start_dt = dmy(perform_start_dt),
+         perform_end_dt = dmy(perform_end_dt),
+         transaction_date = dmy(transaction_date)) %>%
+  mutate(time_period = "apr_to_jun_2021") %>%
+  mutate(fy = "FY 2021")%>%
+  mutate(cal_year = case_when(str_detect(time_period, "2020") ~ "2020",
+                              str_detect(time_period, "2021") ~ "2021",
+                              str_detect(time_period, "2022") ~ "2022",
+                              str_detect(time_period, "2023") ~ "2023",
+                              TRUE ~ "other"
+))
+
+#Q2 2021
+q2_2021_house_spend <-
+  read_csv("../../../data/raw/house_spending_jan_march_2021.csv") %>%
+  clean_names() %>%
+  mutate(perform_start_dt = dmy(perform_start_dt),
+         perform_end_dt = dmy(perform_end_dt),
+         transaction_date = dmy(transaction_date)) %>%
+  mutate(time_period = "jan_to_march_2021") %>%
+  mutate(fy = "FY 2021")%>%
+  mutate(cal_year = case_when(str_detect(time_period, "2020") ~ "2020",
+                              str_detect(time_period, "2021") ~ "2021",
+                              str_detect(time_period, "2022") ~ "2022",
+                              str_detect(time_period, "2023") ~ "2023",
+                              TRUE ~ "other"
+))
+
+# Q1 2021
+q1_2021_house_spend <-
+  read_csv("../../../data/raw/house_spending_oct_dec_2020.csv") %>%
+  clean_names() %>%
+  mutate(perform_start_dt = dmy(perform_start_dt),
+         perform_end_dt = dmy(perform_end_dt),
+         transaction_date = dmy(transaction_date)) %>%
+  mutate(time_period = "oct_to_dec_2020") %>%
+  mutate(fy = "FY 2021")%>%
+  mutate(cal_year = case_when(str_detect(time_period, "2020") ~ "2020",
+                              str_detect(time_period, "2021") ~ "2021",
+                              str_detect(time_period, "2022") ~ "2022",
+                              str_detect(time_period, "2023") ~ "2023",
+                              TRUE ~ "other"
+))
+#Q4 2020
+q4_2020_house_spend <-
+  read_csv("../../../data/raw/house_spending_july_sept_2020.csv") %>%
+  clean_names() %>%
+  mutate(perform_start_dt = dmy(perform_start_dt),
+         perform_end_dt = dmy(perform_end_dt),
+         transaction_date = dmy(transaction_date)) %>%
+  mutate(time_period = "july_to_sept_2020") %>%
+  mutate(fy = "FY 2020")%>%
+  mutate(cal_year = case_when(str_detect(time_period, "2020") ~ "2020",
+                              str_detect(time_period, "2021") ~ "2021",
+                              str_detect(time_period, "2022") ~ "2022",
+                              str_detect(time_period, "2023") ~ "2023",
+                              TRUE ~ "other"
+))
+
+# Q3 2020
+q3_2020_house_spend <-
+  read_csv("../../../data/raw/house_spending_apr_jun_2020.csv") %>%
+  clean_names() %>%
+  mutate(perform_start_dt = dmy(perform_start_dt),
+         perform_end_dt = dmy(perform_end_dt),
+         transaction_date = dmy(transaction_date)) %>%
+  mutate(time_period = "apr_to_jun_2020") %>%
+  mutate(fy = "FY 2020")%>%
+  mutate(cal_year = case_when(str_detect(time_period, "2020") ~ "2020",
+                              str_detect(time_period, "2021") ~ "2021",
+                              str_detect(time_period, "2022") ~ "2022",
+                              str_detect(time_period, "2023") ~ "2023",
+                              TRUE ~ "other"
+))
+
+
+#Q2 2020
+q2_2020_house_spend <-
+  read_csv("../../../data/raw/house_spending_jan_mar_2020.csv") %>%
+  clean_names() %>%
+  mutate(perform_start_dt = dmy(perform_start_dt),
+         perform_end_dt = dmy(perform_end_dt),
+         transaction_date = dmy(transaction_date)) %>%
+  mutate(time_period = "jan_to_mar_2020") %>%
+  mutate(fy = "FY 2020")%>%
+  mutate(cal_year = case_when(str_detect(time_period, "2020") ~ "2020",
+                              str_detect(time_period, "2021") ~ "2021",
+                              str_detect(time_period, "2022") ~ "2022",
+                              str_detect(time_period, "2023") ~ "2023",
+                              TRUE ~ "other"
+))
+```
+# Join data to prep for analysis 
+```{r, include = F}
+# House FY 2023 
+
+house_fy_2023 <- q1_2023_house_spend
+
+# House FY 2022
+house_fy_2022 <-
+  full_join(q1_2022_house_spend, q2_2022_house_spend) %>%
+  full_join(q3_2022_house_spend) %>%
+  full_join(q4_2022_house_spend)
+
+# House FY 2021
+house_fy_2021 <-
+  full_join(q1_2021_house_spend, q2_2021_house_spend) %>%
+  full_join(q3_2021_house_spend) %>%
+  full_join(q4_2021_house_spend)
+
+
+# House FY 2020
+
+house_fy_2020 <-
+  full_join(q2_2020_house_spend, q3_2020_house_spend) %>%
+  full_join(q4_2020_house_spend)
+
+# all FY 2021 and 2022
+
+all_fy_house <-
+  house_fy_2021 %>%
+  full_join(house_fy_2022) %>%
+  full_join(house_fy_2020) %>% 
+  full_join(house_fy_2023)
+
+# write_csv(all_fy_house, "data/findings/house_all_fy_house.csv")
+
+```
+## What do we want to consider 'security spending?'
+
+* Security Terms: 
+  * SECURITY, PROTECTION, SURVEILLANCE, BODYGUARD, BODY GUARD, SAFETY, GUARD
+
+* Terms to exclude:
+  * PARKING, CYBERSECURITY, CYBER SECURITY, IT SECURITY, EVENT SECURITY, SECURITY DEPOSIT, MOTORCROSS, NATIONAL SECURITY, INFO SYSTEMS, APPLICATION SECURITY, FIREWALL, SCHEDULING, HUMAN R, CYBER, INFORMATION SECURITY, HOMELAND, GRAND TOTAL, SUBTOTAL
+  
+```{r}
+## security spending all years
+all_years_security <-
+  all_fy_house %>%
+  filter(!str_detect(description, "TOTAL|SUBTOTAL")) %>% 
+  filter(str_detect(description, "SECURITY|PROTECTION|SURVEILLANCE|BODYGUARD|BODY GUARD|SAFETY|GUARD")) %>%
+  filter(!str_detect(description, "PARKING")) %>%
+    # filter out the terms we don't want 
+  filter(!str_detect(description, "CYBERSECURITY|CYBER SECURITY|IT SECURITY|EVENT SECURITY|SECURITY DEPOSIT|MOTORCROSS|NATIONAL SECURITY|INFO SYSTEMS|APPLICATION SECURITY|FIREWALL|SCHEDULING|HUMAN R|CYBER|INFORMATION SECURITY|HOMELAND|TOTALS|PROTECTION PLAN|WEBSITE SECURITY|INTERNET SECURITY|COMPUTER SECURITY|SOCIAL SECURITY|WEB|COMPUTER SECURITY|PC SECURITY|ONLINE SECURITY SOFTWARE|SECURITY SOFTWARE|SENIOR SECURITY ANALYST|SR INFO SYST. SECURITY ANALYST|COMMUNICATIONS SECURITY|SECURITY ENGINEER|SENIOR SECURITY ARCHITECT|SENIOR SECURITY ENGINEER|SENIOR SECURITY IT ANALYST|SR COMM SECURITY ANALYST|SR SYSTEMS SECURITY ENGINEER|SYSTEM SECURITY ENGINEER|SR INFO SYST. SECURITY ANALYST (OTHER COMPENSATION)|SOFTWARE SECURITY|DATA PROTECTION|SECURITY FEE|SECURITY SCREENING|SECURITY EQUIPMENT")) %>%
+  filter(!str_detect(sort_sequence, "CYBERSECURITY|CYBER SECURITY|IT SECURITY|EVENT SECURITY|SECURITY DEPOSIT|MOTORCROSS|NATIONAL SECURITY|INFO SYSTEMS|APPLICATION SECURITY|FIREWALL|SCHEDULING|HUMAN R|CYBER|INFORMATION SECURITY|HOMELAND|TOTALS|PROTECTION PLAN|WEBSITE SECURITY|INTERNET SECURITY|COMPUTER SECURITY|SOCIAL SECURITY|WEB|COMPUTER SECURITY|PC SECURITY|ONLINE SECURITY SOFTWARE|SECURITY SOFTWARE|SENIOR SECURITY ANALYST|SR INFO SYST. SECURITY ANALYST|COMMUNICATIONS SECURITY|SECURITY ENGINEER|SENIOR SECURITY ARCHITECT|SENIOR SECURITY ENGINEER|SENIOR SECURITY IT ANALYST|SR COMM SECURITY ANALYST|SR SYSTEMS SECURITY ENGINEER|SYSTEM SECURITY ENGINEER|SR INFO SYST. SECURITY ANALYST (OTHER COMPENSATION)|SOFTWARE SECURITY|DATA PROTECTION|SECURITY FEE|SECURITY SCREENING|SECURITY EQUIPMENT")) %>% 
+  mutate(fy = case_when(transaction_date > "2019-09-30" & transaction_date <= "2020-09-30" ~ "FY 2020",
+                        transaction_date > "2020-09-30" & transaction_date <= "2021-09-30" ~ "FY 2021",
+                        transaction_date > "2021-09-30" ~ "FY 2022",
+                        TRUE ~ "huh")) %>%
+    mutate(fy_from_perform_start_dt = case_when(
+                        perform_start_dt > "2016-09-30" & perform_start_dt <= "2017-09-30" ~ "FY 2017",
+                        perform_start_dt > "2017-09-30" & perform_start_dt <= "2018-09-30" ~ "FY 2018",
+                        perform_start_dt > "2018-09-30" & perform_start_dt <= "2019-09-30" ~ "FY 2019",
+                        perform_start_dt > "2019-09-30" & perform_start_dt <= "2020-09-30" ~ "FY 2020",
+                        perform_start_dt > "2020-09-30" & perform_start_dt <= "2021-09-30" ~ "FY 2021",
+                        perform_start_dt > "2021-09-30" & perform_start_dt <= "2022-09-30" ~ "FY 2022",
+                        perform_start_dt > "2022-09-30" & perform_start_dt <= "2023-09-30" ~ "FY 2023",
+                        perform_start_dt > "2023-09-30" & perform_start_dt <= "2024-09-30" ~ "FY 2024",
+                        TRUE ~ "other")) %>% 
+  mutate(cal_year_from_perform_start_dt = case_when(
+                        perform_start_dt > "2016-12-31" & perform_start_dt < "2018-01-01" ~ "2017",
+                        perform_start_dt > "2017-12-31" & perform_start_dt < "2019-01-01" ~ "2018",
+                        perform_start_dt > "2018-12-31" & perform_start_dt < "2020-01-01" ~ "2019",
+                        perform_start_dt > "2019-12-31" & perform_start_dt < "2021-01-01" ~ "2020",
+                        perform_start_dt > "2020-12-31" & perform_start_dt < "2022-01-01" ~ "2021",
+                        perform_start_dt > "2021-12-31" & perform_start_dt < "2023-01-01" ~ "2022",
+                        perform_start_dt > "2022-12-31" & perform_start_dt < "2024-01-01" ~ "2023",
+                        TRUE ~ "other")) %>% 
+    mutate(quarter = case_when(transaction_date >= "2018-10-01" & transaction_date < "2019-01-01" ~ "Q1 2019",
+                             transaction_date >= "2019-01-01" & transaction_date < "2019-04-01" ~ "Q2 2019",
+                             transaction_date >= "2019-04-01" & transaction_date < "2019-07-01" ~ "Q3 2019",
+                             transaction_date >= "2019-07-01" & transaction_date < "2019-10-01" ~ "Q4 2019",
+                             transaction_date >= "2019-10-01" & transaction_date < "2020-01-01" ~ "Q1 2020",
+                             transaction_date >= "2019-01-01" & transaction_date < "2020-04-01" ~ "Q2 2020",
+                             transaction_date >= "2019-04-01" & transaction_date < "2020-07-01" ~ "Q3 2020",
+                             transaction_date >= "2019-07-01" & transaction_date < "2020-10-01" ~ "Q4 2020",
+                             transaction_date >= "2020-10-01" & transaction_date < "2021-01-01" ~ "Q1 2021",
+                             transaction_date >= "2020-01-01" & transaction_date < "2021-04-01" ~ "Q2 2021",
+                             transaction_date >= "2019-04-01" & transaction_date < "2021-07-01" ~ "Q3 2021",
+                             transaction_date >= "2019-07-01" & transaction_date < "2021-10-01" ~ "Q4 2021",
+                             transaction_date >= "2021-10-01" & transaction_date < "2022-01-01" ~ "Q1 2022",
+                             transaction_date >= "2021-01-01" & transaction_date < "2022-04-01" ~ "Q2 2022",
+                             transaction_date >= "2019-04-01" & transaction_date < "2022-07-01" ~ "Q3 2022",
+                             transaction_date >= "2019-07-01" & transaction_date < "2022-10-01" ~ "Q4 2022",
+                             transaction_date >= "2022-10-01" & transaction_date < "2023-01-01" ~ "Q1 2023",
+                             transaction_date >= "2022-01-01" & transaction_date < "2023-04-01" ~ "Q2 2023",
+                             transaction_date >= "2019-04-01" & transaction_date < "2023-07-01" ~ "Q3 2023",
+                             transaction_date >= "2019-07-01" & transaction_date < "2023-10-01" ~ "Q4 2023")) %>% 
+  mutate(quarter_by_perform_start_dt = case_when(
+                             perform_start_dt >= "2016-10-01" & perform_start_dt < "2017-01-01" ~ "Q1 2017",
+                             perform_start_dt >= "2017-01-01" & perform_start_dt < "2017-04-01" ~ "Q2 2017",
+                             perform_start_dt >= "2017-04-01" & perform_start_dt < "2017-07-01" ~ "Q3 2017",
+                             perform_start_dt >= "2017-07-01" & perform_start_dt < "2017-10-01" ~ "Q4 2017",
+                             perform_start_dt >= "2017-10-01" & perform_start_dt < "2018-01-01" ~ "Q1 2018",
+                             perform_start_dt >= "2018-01-01" & perform_start_dt < "2018-04-01" ~ "Q2 2018",
+                             perform_start_dt >= "2018-04-01" & perform_start_dt < "2018-07-01" ~ "Q3 2018",
+                             perform_start_dt >= "2018-07-01" & perform_start_dt < "2018-10-01" ~ "Q4 2018",
+                             perform_start_dt >= "2018-10-01" & perform_start_dt < "2019-01-01" ~ "Q1 2019",
+                             perform_start_dt >= "2019-01-01" & perform_start_dt < "2019-04-01" ~ "Q2 2019",
+                             perform_start_dt >= "2019-04-01" & perform_start_dt < "2019-07-01" ~ "Q3 2019",
+                             perform_start_dt >= "2019-07-01" & perform_start_dt < "2019-10-01" ~ "Q4 2019",
+                             perform_start_dt >= "2019-10-01" & perform_start_dt < "2020-01-01" ~ "Q1 2020",
+                             perform_start_dt >= "2019-01-01" & perform_start_dt < "2020-04-01" ~ "Q2 2020",
+                             perform_start_dt >= "2019-04-01" & perform_start_dt < "2020-07-01" ~ "Q3 2020",
+                             perform_start_dt >= "2019-07-01" & perform_start_dt < "2020-10-01" ~ "Q4 2020",
+                             perform_start_dt >= "2020-10-01" & perform_start_dt < "2021-01-01" ~ "Q1 2021",
+                             perform_start_dt >= "2020-01-01" & perform_start_dt < "2021-04-01" ~ "Q2 2021",
+                             perform_start_dt >= "2019-04-01" & perform_start_dt < "2021-07-01" ~ "Q3 2021",
+                             perform_start_dt >= "2019-07-01" & perform_start_dt < "2021-10-01" ~ "Q4 2021",
+                             perform_start_dt >= "2021-10-01" & perform_start_dt < "2022-01-01" ~ "Q1 2022",
+                             perform_start_dt >= "2021-01-01" & perform_start_dt < "2022-04-01" ~ "Q2 2022",
+                             perform_start_dt >= "2019-04-01" & perform_start_dt < "2022-07-01" ~ "Q3 2022",
+                             perform_start_dt >= "2019-07-01" & perform_start_dt < "2022-10-01" ~ "Q4 2022",
+                             perform_start_dt >= "2022-10-01" & perform_start_dt < "2023-01-01" ~ "Q1 2023",
+                             perform_start_dt >= "2022-01-01" & perform_start_dt < "2023-04-01" ~ "Q2 2023",
+                             perform_start_dt >= "2019-04-01" & perform_start_dt < "2023-07-01" ~ "Q3 2023",
+                             perform_start_dt >= "2019-07-01" & perform_start_dt < "2023-10-01" ~ "Q4 2023"
+                             ))
+
+
+
+# write_csv(all_years_security, "data/findings/house_all_years_security.csv")
+```
+
+<!-- # Analysis  -->
+<!-- We can begin by looking at overall spending by fiscal year (don't think this is that relevant) -->
+<!-- ```{r} -->
+<!-- # all spending by fy -- house -->
+<!-- all_fy_house %>% -->
+<!--   filter(!str_detect(description, "TOTAL")) %>%  -->
+<!--   filter(!str_detect(sort_sequence, "GRAND TOTAL|SUBTOTAL")) %>%  -->
+<!--   group_by(fy) %>% -->
+<!--   summarise(amount = sum(amount, na.rm = T), -->
+<!--             n = n()) -->
+<!-- ``` -->
+
+# Analysis: House 
+
+* To start,we'll define security spending as "any spending that contributes towards the physical security of members of congress or their staff". We want to be catching stuff like alarm systems, bodyguards, additional security staff, etc.
+
+* What we exclude: IT security, national security, cyber security, Jan 6 special appropriations (I will come back to this)
+
+* Luckily, the House version of this data has a 'description' field that tells us at least a little about what kind of spending this is. 
+
+* To identify security spending, we filter for keywords "security" & "security staff", the two descriptions that tend to identify the kinds of spending we're interested in (full list of spending categories below) and filtering out any subtotals or totals that could makee us miscount 
+
+<!-- # full list of spending categories  -->
+<!-- ```{r} -->
+
+<!-- all_fy_house %>% -->
+<!--   filter(!str_detect(description, "TOTAL")) %>%  -->
+<!--   group_by(description) %>%  -->
+<!--   summarise(n = n(),  -->
+<!--             sum = sum(amount)) %>%  -->
+<!--   arrange(desc(sum)) -->
+<!-- ``` -->
+
+# all 'security' categories 
+```{r}
+all_years_security %>%
+  filter(!str_detect(description, "TOTAL|total|subtotal|SUBTOTAL")) %>% 
+  filter(if_any(c(description, vendor_name), ~str_detect(.,"SECURITY|PROTECTION|SURVEILLANCE|BODYGUARD|BODY GUARD|SAFETY|GUARD"))) %>% 
+  filter(!str_detect(description, "PARKING")) %>%
+    # filter out the terms we don't want 
+  filter(!str_detect(description, "CYBERSECURITY|CYBER SECURITY|IT SECURITY|EVENT SECURITY|SECURITY DEPOSIT|MOTORCROSS|NATIONAL SECURITY|INFO SYSTEMS|APPLICATION SECURITY|FIREWALL|SCHEDULING|HUMAN R|CYBER|INFORMATION SECURITY|HOMELAND|TOTALS|SOCIAL SECURITY")) %>%
+  filter(!str_detect(sort_sequence, "GRAND TOTAL|SUBTOTAL|SECURITY|SOCIAL SECURITY")) %>% 
+  # clean up house office names 
+  mutate(organization = str_remove(organization, "2023 ")) %>%
+  mutate(organization = str_remove(organization, "2021 ")) %>%
+  mutate(organization = str_remove(organization, "2022 ")) %>%
+  mutate(organization = str_remove(organization, "2020 ")) %>%
+  mutate(organization = str_remove(organization, "2019 ")) %>%
+  mutate(organization = str_remove(organization, "2018 ")) %>%
+  # add column for fiscal year 
+  mutate(fy = case_when(transaction_date > "2019-09-30" & transaction_date <= "2020-09-30" ~ "FY 2020",
+                        transaction_date > "2020-09-30" & transaction_date <= "2021-09-30" ~ "FY 2021",
+                        transaction_date > "2021-09-30" ~ "FY 2022",
+                        TRUE ~ "huh")) %>%
+    mutate(fy_from_perform_start_dt = case_when(perform_start_dt > "2019-09-30" & perform_start_dt <= "2020-09-30" ~ "FY 2020",
+                        perform_start_dt > "2020-09-30" & perform_start_dt <= "2021-09-30" ~ "FY 2021",
+                        perform_start_dt > "2021-09-30" & perform_start_dt <= "2022-09-30" ~ "FY 2022",
+                        perform_start_dt > "2022-09-30" ~ "FY 2023",
+                        TRUE ~ "other")) %>% 
+  mutate(cal_year_from_perform_start_dt = case_when(perform_start_dt > "2018-12-31" & perform_start_dt < "2020-01-01" ~ "2019",
+                        perform_start_dt > "2019-12-31" & perform_start_dt < "2021-01-01" ~ "2020",
+                        perform_start_dt > "2020-12-31" & perform_start_dt < "2022-01-01" ~ "2021",
+                        perform_start_dt > "2021-12-31" & perform_start_dt < "2023-01-01" ~ "2022",
+                        perform_start_dt > "2022-12-31" & perform_start_dt < "2024-01-01" ~ "2023",
+                        TRUE ~ "other")) %>% 
+    mutate(quarter = case_when(transaction_date >= "2018-10-01" & transaction_date < "2019-01-01" ~ "Q1 2019",
+                             transaction_date >= "2018-01-01" & transaction_date < "2019-04-01" ~ "Q2 2019",
+                             transaction_date >= "2019-04-01" & transaction_date < "2019-07-01" ~ "Q3 2019",
+                             transaction_date >= "2019-07-01" & transaction_date < "2019-10-01" ~ "Q4 2019",
+                             transaction_date >= "2019-10-01" & transaction_date < "2020-01-01" ~ "Q1 2020",
+                             transaction_date >= "2019-01-01" & transaction_date < "2020-04-01" ~ "Q2 2020",
+                             transaction_date >= "2019-04-01" & transaction_date < "2020-07-01" ~ "Q3 2020",
+                             transaction_date >= "2019-07-01" & transaction_date < "2020-10-01" ~ "Q4 2020",
+                             transaction_date >= "2020-10-01" & transaction_date < "2021-01-01" ~ "Q1 2021",
+                             transaction_date >= "2020-01-01" & transaction_date < "2021-04-01" ~ "Q2 2021",
+                             transaction_date >= "2019-04-01" & transaction_date < "2021-07-01" ~ "Q3 2021",
+                             transaction_date >= "2019-07-01" & transaction_date < "2021-10-01" ~ "Q4 2021",
+                             transaction_date >= "2021-10-01" & transaction_date < "2022-01-01" ~ "Q1 2022",
+                             transaction_date >= "2021-01-01" & transaction_date < "2022-04-01" ~ "Q2 2022",
+                             transaction_date >= "2019-04-01" & transaction_date < "2022-07-01" ~ "Q3 2022",
+                             transaction_date >= "2019-07-01" & transaction_date < "2022-10-01" ~ "Q4 2022",
+                             transaction_date >= "2022-10-01" & transaction_date < "2023-01-01" ~ "Q1 2023",
+                             transaction_date >= "2022-01-01" & transaction_date < "2023-04-01" ~ "Q2 2023",
+                             transaction_date >= "2019-04-01" & transaction_date < "2023-07-01" ~ "Q3 2023",
+                             transaction_date >= "2019-07-01" & transaction_date < "2023-10-01" ~ "Q4 2023")) %>% 
+  mutate(quarter_by_perform_start_dt = case_when(perform_start_dt >= "2018-10-01" & perform_start_dt < "2019-01-01" ~ "Q1 2019",
+                             perform_start_dt >= "2018-01-01" & perform_start_dt < "2019-04-01" ~ "Q2 2019",
+                             perform_start_dt >= "2019-04-01" & perform_start_dt < "2019-07-01" ~ "Q3 2019",
+                             perform_start_dt >= "2019-07-01" & perform_start_dt < "2019-10-01" ~ "Q4 2019",
+                             perform_start_dt >= "2019-10-01" & perform_start_dt < "2020-01-01" ~ "Q1 2020",
+                             perform_start_dt >= "2019-01-01" & perform_start_dt < "2020-04-01" ~ "Q2 2020",
+                             perform_start_dt >= "2019-04-01" & perform_start_dt < "2020-07-01" ~ "Q3 2020",
+                             perform_start_dt >= "2019-07-01" & perform_start_dt < "2020-10-01" ~ "Q4 2020",
+                             perform_start_dt >= "2020-10-01" & perform_start_dt < "2021-01-01" ~ "Q1 2021",
+                             perform_start_dt >= "2020-01-01" & perform_start_dt < "2021-04-01" ~ "Q2 2021",
+                             perform_start_dt >= "2019-04-01" & perform_start_dt < "2021-07-01" ~ "Q3 2021",
+                             perform_start_dt >= "2019-07-01" & perform_start_dt < "2021-10-01" ~ "Q4 2021",
+                             perform_start_dt >= "2021-10-01" & perform_start_dt < "2022-01-01" ~ "Q1 2022",
+                             perform_start_dt >= "2021-01-01" & perform_start_dt < "2022-04-01" ~ "Q2 2022",
+                             perform_start_dt >= "2019-04-01" & perform_start_dt < "2022-07-01" ~ "Q3 2022",
+                             perform_start_dt >= "2019-07-01" & perform_start_dt < "2022-10-01" ~ "Q4 2022",
+                             perform_start_dt >= "2022-10-01" & perform_start_dt < "2023-01-01" ~ "Q1 2023",
+                             perform_start_dt >= "2022-01-01" & perform_start_dt < "2023-04-01" ~ "Q2 2023",
+                             perform_start_dt >= "2019-04-01" & perform_start_dt < "2023-07-01" ~ "Q3 2023",
+                             perform_start_dt >= "2019-07-01" & perform_start_dt < "2023-10-01" ~ "Q4 2023"
+                             )) %>% 
+  # change mr. donato's name 
+  mutate(vendor_name = case_when(vendor_name == "M DONATO" ~ "MICHAEL DONATO II",
+                                 TRUE ~ vendor_name)) %>%
+  group_by(description) %>% 
+  summarise(count = n(),
+            amount_2020 = sum(amount[fy_from_perform_start_dt == "FY 2020"]),
+            amount_2021 = sum(amount[fy_from_perform_start_dt == "FY 2021"]),
+            amount_2022 = sum(amount[fy_from_perform_start_dt == "FY 2022"]),
+            amount_overall = sum(amount),
+            yoy_change = (amount_2022 - amount_2020) / (amount_2020) * 100) %>% 
+  arrange(desc(amount_overall)) 
+  # ungroup() %>% 
+  #  group_by(description) %>% 
+  # summarise(count = n(),
+  #           amount_2021 = sum(amount[fy == "FY 2021"]),
+  #           amount_2022 = sum(amount[fy == "FY 2022"]),
+  #           amount_overall = sum(amount),
+  #           yoy_change = (amount_2022 - amount_2021) / (amount_2021) * 100) %>% 
+  # arrange(desc(amount_overall))
+
+```
+## How much is the House spending on security?
+
+### All members + offices 
+  * Something to think about: Jan 6th appropriations
+    * Following Jan 6th congressed passed [Emergency Security Supplemental to Respond to January 6th](https://appropriations.house.gov/sites/democrats.appropriations.house.gov/files/Emergency%20Security%20Supplemental%20Summary.pdf), a bill that provided congress with some additional funding which included 20+ million for the house sgt at arms to improve security 
+    * Unfortunately, the way the Jan 6th spending is labeled makees it a little harder to identify, for example if we look for 'security' spending from the Jan 6th program we get nothing:
+    
+# jan 6th spending explicitly labeled 'security'
+```{r}
+
+all_fy_house %>% 
+  filter(str_detect(program, "JAN 6")) %>% 
+  filter(!str_detect(description, "TOTAL|total|subtotal|SUBTOTAL")) %>% 
+  filter(if_any(c(description, vendor_name), ~str_detect(.,"SECURITY|PROTECTION|SURVEILLANCE|BODYGUARD|BODY GUARD|SAFETY|GUARD"))) %>% 
+    filter(!str_detect(description, "PARKING")) %>%
+    # filter out the terms we don't want 
+  filter(!str_detect(description, "CYBERSECURITY|CYBER SECURITY|IT SECURITY|EVENT SECURITY|SECURITY DEPOSIT|MOTORCROSS|NATIONAL SECURITY|INFO SYSTEMS|APPLICATION SECURITY|FIREWALL|SCHEDULING|HUMAN R|CYBER|INFORMATION SECURITY|HOMELAND|TOTALS|SOCIAL SECURITY")) %>%
+  filter(!str_detect(sort_sequence, "GRAND TOTAL|SUBTOTAL|SECURITY|SOCIAL SECURITY")) %>% 
+  group_by(description) %>% 
+  summarise(count = n(),
+            spend_sum = sum(amount)) %>% 
+  arrange(desc(spend_sum))
+```
+# how is jan 6th spending labeled? 
+# ask about jan 6th spending tmrw
+```{r}
+all_fy_house %>% 
+  filter(!str_detect(description, "TOTAL")) %>% 
+  filter(str_detect(program, "JAN 6")) %>% 
+  group_by(description) %>% 
+  summarise(count = n(),
+            spend_sum = sum(amount)) %>% 
+  arrange(desc(spend_sum))
+```
+  * This means we have to find a creative solution for identifying security spending in jan 6th appropriation. 
+    * We could try identifying by vendor (time consuming as we'd have to spend some time redsearching each vendor) or we can search for the word 'security' in the veendor names
+    * Honestly neither of these are perfect but provide a valid, explainable starting place 
+    
+# fiscal year   
+```{r}
+all_years_security %>%
+  filter(!str_detect(description, "TOTAL")) %>%
+filter(if_any(c(description, vendor_name), ~str_detect(.,"SECURITY|PROTECTION|SURVEILLANCE|BODYGUARD|BODY GUARD|SAFETY|GUARD"))) %>% 
+   filter(!str_detect(description, "PARKING")) %>%
+  # filter out the terms we don't want 
+  filter(!str_detect(description, "CYBERSECURITY|CYBER SECURITY|IT SECURITY|EVENT SECURITY|SECURITY DEPOSIT|MOTORCROSS|NATIONAL SECURITY|INFO SYSTEMS|APPLICATION SECURITY|FIREWALL|SCHEDULING|HUMAN R|CYBER|INFORMATION SECURITY|HOMELAND|TOTALS|SOCIAL SECURITY|CYBERSECURITY|CYBER SECURITY|IT SECURITY|EVENT SECURITY|SECURITY DEPOSIT|MOTORCROSS|NATIONAL SECURITY|INFO SYSTEMS|APPLICATION SECURITY|FIREWALL|SCHEDULING|HUMAN R|CYBER|INFORMATION SECURITY|HOMELAND|TOTALS|PROTECTION PLAN|WEBSITE SECURITY|INTERNET SECURITY|COMPUTER SECURITY|SOCIAL SECURITY|WEB|COMPUTER SECURITY|PC SECURITY|ONLINE SECURITY SOFTWARE|SECURITY SOFTWARE")) %>%
+  filter(!str_detect(description, "GRAND TOTAL|SUBTOTAL|SOCIAL SECURITY|CYBERSECURITY|CYBER SECURITY|IT SECURITY|EVENT SECURITY|SECURITY DEPOSIT|MOTORCROSS|NATIONAL SECURITY|INFO SYSTEMS|APPLICATION SECURITY|FIREWALL|SCHEDULING|HUMAN R|CYBER|INFORMATION SECURITY|HOMELAND|TOTALS|PROTECTION PLAN|WEBSITE SECURITY|INTERNET SECURITY|COMPUTER SECURITY|SOCIAL SECURITY|WEB|COMPUTER SECURITY|PC SECURITY|ONLINE SECURITY SOFTWARE|SECURITY SOFTWARE")) %>%
+    filter(!str_detect(sort_sequence, "GRAND TOTAL|SUBTOTAL|SOCIAL SECURITY|CYBERSECURITY|CYBER SECURITY|IT SECURITY|EVENT SECURITY|SECURITY DEPOSIT|MOTORCROSS|NATIONAL SECURITY|INFO SYSTEMS|APPLICATION SECURITY|FIREWALL|SCHEDULING|HUMAN R|CYBER|INFORMATION SECURITY|HOMELAND|TOTALS|PROTECTION PLAN|WEBSITE SECURITY|INTERNET SECURITY|COMPUTER SECURITY|SOCIAL SECURITY|WEB|COMPUTER SECURITY|PC SECURITY|ONLINE SECURITY SOFTWARE|SECURITY SOFTWARE")) %>%
+  group_by(fy_from_perform_start_dt) %>% 
+  summarise(count = n(),
+            spend_sum = sum(amount)) 
+```
+
+# calendar year
+```{r}
+
+all_years_security  %>%
+  filter(!str_detect(description, "TOTAL")) %>% 
+  filter(if_any(c(description, vendor_name), ~str_detect(.,"SECURITY SERVICE|SECURITY STAFF|SECURITY"))) %>% 
+  filter(str_detect(description, "SECURITY|PROTECTION|SURVEILLANCE|BODYGUARD|BODY GUARD|SAFETY|GUARD")) %>%
+  filter(!str_detect(description, "PARKING")) %>%
+  # filter out the terms we don't want 
+  filter(!str_detect(description, "CYBERSECURITY|CYBER SECURITY|IT SECURITY|EVENT SECURITY|SECURITY DEPOSIT|MOTORCROSS|NATIONAL SECURITY|INFO SYSTEMS|APPLICATION SECURITY|FIREWALL|SCHEDULING|HUMAN R|CYBER|INFORMATION SECURITY|HOMELAND|TOTALS|SOCIAL SECURITY")) %>%
+  filter(!str_detect(sort_sequence, "GRAND TOTAL|SUBTOTAL|SECURITY|SOCIAL SECURITY")) %>% 
+  group_by(cal_year_from_perform_start_dt) %>%
+  summarise(count = n(),
+            spend_sum = sum(amount))
+```
+
+#House MEMBER OFFICE spending FY 2022 vs. FY 2020
+```{r}
+
+# no difference in methods here so I won't include both 
+all_years_security  %>%
+    filter(!str_detect(description, "TOTAL")) %>% 
+    filter(str_detect(organization, "HON.")) %>%
+  group_by(fy_from_perform_start_dt) %>%
+  summarise(count = n(),
+            spend_sum = sum(amount)) 
+
+
+```
+
+# non member offices 
+```{r}
+
+# no difference in methods here so I won't include both 
+all_years_security  %>%
+    filter(!str_detect(description, "TOTAL")) %>% 
+    filter(!str_detect(organization, "HON.")) %>%
+  group_by(fy_from_perform_start_dt) %>% 
+  summarise(count = n(),
+            spend_sum = sum(amount)) 
+
+
+```
+## what are offices spending on?
+## What's driving these increases?
+
+# All offices 
+```{r}
+
+all_years_security  %>%
+  filter(!str_detect(description, "TOTAL")) %>% 
+  filter(transaction_date > "2019-09-30") %>%
+  group_by(vendor_name) %>%
+  summarise(n = n(),
+            amount_2020 = sum(amount[fy_from_perform_start_dt == "FY 2020"]),
+            amount_2021 = sum(amount[fy_from_perform_start_dt == "FY 2021"]),
+            amount_2022 = sum(amount[fy_from_perform_start_dt == "FY 2022"]),
+            amount_2023 = sum(amount[fy_from_perform_start_dt == "FY 2023"]),
+            pct_change_20_to_21 = (amount_2022 - amount_2020) / (amount_2020) * 100,
+            overall_sum = sum(amount)) %>%
+  filter(amount_2021 > 10000) %>% 
+  arrange(desc(pct_change_20_to_21))
+```
+# Only meembers 
+```{r}
+all_years_security  %>%
+  filter(str_detect(organization, "HON.")) %>%
+   filter(!str_detect(description, "TOTAL")) %>% 
+  filter(transaction_date > "2019-09-30") %>%
+  group_by(vendor_name) %>%
+  summarise(n = n(),
+            amount_2020 = sum(amount[fy_from_perform_start_dt == "FY 2020"]),
+            amount_2021 = sum(amount[fy_from_perform_start_dt == "FY 2021"]),
+            amount_2022 = sum(amount[fy_from_perform_start_dt == "FY 2022"]),
+            amount_2023 = sum(amount[fy_from_perform_start_dt == "FY 2023"]),
+            pct_change_20_to_22 = (amount_2022 - amount_2020) / (amount_2020) * 100,
+            overall_sum = sum(amount)) %>%
+  filter(amount_2021 > 10000) %>% 
+  arrange(desc(overall_sum))
+```
+# non member offices
+```{r}
+all_years_security  %>%
+  filter(!str_detect(organization, "HON.")) %>%
+   filter(!str_detect(description, "TOTAL")) %>% 
+  filter(transaction_date > "2019-09-30") %>%
+  group_by(vendor_name) %>%
+  summarise(n = n(),
+            amount_2021 = sum(amount[fy == "FY 2021"]),
+            amount_2022 = sum(amount[fy == "FY 2022"]),
+            amount_2023 = sum(amount[fy == "FY 2023"]),
+            pct_change_21_to_22 = (amount_2022 - amount_2021) / (amount_2021) * 100,
+            overall_sum = sum(amount)) %>%
+  filter(amount_2021 > 10000) %>% 
+  arrange(desc(pct_change_21_to_22))
+  # write_csv("data/clean/house_sec_total_non_member_offices.csv")
+```
+
+
+# top spenders fy(member offices)
+# how do we want to consider long-term security contrtacts?
+# consider what were the systemic changes after jan 6th and how do we consider that spending?
+```{r}
+house_member_yoyo_change_security_spending_21_22 <- 
+  all_years_security  %>%
+  filter(str_detect(organization, "HON.")) %>%
+  filter(transaction_date > "2019-09-30") %>%
+  mutate(organization = str_remove(organization, "2020 ")) %>%
+  mutate(organization = str_remove(organization, "2021 ")) %>%
+  mutate(organization = str_remove(organization, "2022 ")) %>%
+  mutate(organization = str_remove(organization, "2023 ")) %>%
+  filter(transaction_date > "2019-09-30") %>%
+  mutate(fy = case_when(transaction_date > "2019-09-30" & transaction_date <= "2020-09-30" ~ "FY 2020",
+                        transaction_date > "2020-09-30" & transaction_date <= "2021-09-30" ~ "FY 2021",
+                        transaction_date > "2021-09-30" ~ "FY 2022",
+                        TRUE ~ "huh")) %>%
+  group_by(organization) %>%
+  summarise(count = n(),
+            amount_2020 = sum(amount[fy_from_perform_start_dt == "FY 2020"]),
+            amount_2021 = sum(amount[fy_from_perform_start_dt == "FY 2021"]),
+            amount_2022 = sum(amount[fy_from_perform_start_dt == "FY 2022"]),
+            amount_2023 = sum(amount[fy_from_perform_start_dt == "FY 2023"]),
+            amount_overall = sum(amount),
+            yoy_change = (amount_2022 - amount_2020) / (amount_2020) * 100) %>%
+  filter(amount_overall > 5000,
+         amount_2021 > 8000) %>%
+  arrange(desc(amount_overall)) 
+
+house_member_yoyo_change_security_spending_21_22
+
+```
+
+
+# largest spending relationships
+```{r}
+house_member_vendor_relationships_security_21_22 <- 
+  all_years_security  %>%
+  filter(str_detect(organization, "HON.")) %>%
+  filter(transaction_date > "2019-09-30") %>%
+  mutate(organization = str_remove(organization, "2023 ")) %>%
+  mutate(organization = str_remove(organization, "2021 ")) %>%
+  mutate(organization = str_remove(organization, "2022 ")) %>%
+  mutate(organization = str_remove(organization, "2020 ")) %>%
+  mutate(fy = case_when(transaction_date > "2019-09-30" & transaction_date <= "2020-09-30" ~ "FY 2020",
+                        transaction_date > "2020-09-30" & transaction_date <= "2021-09-30" ~ "FY 2021",
+                        transaction_date > "2021-09-30" ~ "FY 2022",
+                        TRUE ~ "huh")) %>%
+  mutate(vendor_name = case_when(vendor_name == "M DONATO" ~ "MICHAEL DONATO II",
+                                 TRUE ~ vendor_name)) %>%
+  group_by(organization, vendor_name) %>%
+  summarise(n = n(),
+            sum = sum(amount)) %>%
+  arrange(desc(sum)) %>% 
+  head(50)
+
+house_member_vendor_relationships_security_21_22 
+
+
+
+
+
+```
